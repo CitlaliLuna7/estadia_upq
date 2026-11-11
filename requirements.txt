@@ -5,4 +5,5 @@ streamlit-folium
 plotly
 sqlalchemy
 psycopg2-binary
+psycopg
 fpdf
