@@ -3,7 +3,6 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import plotly.express as px
-from sqlalchemy import create_engine
 
 st.set_page_config(
     page_title="Plataforma de Empleabilidad UPQ",
@@ -12,32 +11,18 @@ st.set_page_config(
 
 @st.cache_data
 def cargar_datos():
-    engine = create_engine("postgresql://mi_usuario:Lunaz123@localhost:5432/estadia_upq")
-    query = """
-    SELECT 
-        e.id_empresa,
-        e.razon_social,
-        e.sector,
-        e.parque_industrial,
-        e.latitud,
-        e.longitud,
-        v.id_vacante,
-        v.titulo_puesto,
-        v.area,
-        v.modalidad,
-        v.apoyo,
-        v.requisitos
-    FROM vacantes v
-    JOIN empresas e ON v.id_empresa = e.id_empresa;
-    """
-    df = pd.read_sql(query, engine)
-    return df
+    data = [
+        {"id_empresa": 1, "razon_social": "TechData QRO", "sector": "Tecnología", "parque_industrial": "Parque Industrial Bernardo Quintana", "latitud": 20.5888, "longitud": -100.3899, "id_vacante": 101, "titulo_puesto": "Ingeniero de Machine Learning", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$15,000 MXN", "requisitos": "Python, TensorFlow, Scikit-learn, SQL"},
+        {"id_empresa": 2, "razon_social": "DataMetrics", "sector": "Consultoría", "parque_industrial": "El Marqués", "latitud": 20.6120, "longitud": -100.4010, "id_vacante": 102, "titulo_puesto": "Data Engineer Specialist", "area": "Ingeniería de Datos", "modalidad": "Híbrido", "apoyo": "$18,000 MXN", "requisitos": "Python, Spark, PostgreSQL, Docker, AWS"},
+        {"id_empresa": 3, "razon_social": "BI Solutions QRO", "sector": "Finanzas", "parque_industrial": "Parque Industrial Innovación", "latitud": 20.5922, "longitud": -100.3750, "id_vacante": 103, "titulo_puesto": "Analista de BI Senior", "area": "Analítica y BI", "modalidad": "Remoto", "apoyo": "$14,000 MXN", "requisitos": "Power BI, SQL Server, Excel Avanzado, Python"},
+        {"id_empresa": 4, "razon_social": "AI Vision Labs", "sector": "Investigación", "parque_industrial": "Cerca UPQ / El Marqués", "latitud": 20.5600, "longitud": -100.3200, "id_vacante": 104, "titulo_puesto": "Desarrollador Computer Vision", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$16,500 MXN", "requisitos": "OpenCV, PyTorch, C++, Linux"},
+        {"id_empresa": 5, "razon_social": "CloudData Systems", "sector": "Tecnología", "parque_industrial": "Juriquilla Tech Park", "latitud": 20.6500, "longitud": -100.4500, "id_vacante": 105, "titulo_puesto": "Arquitecto de Datos Cloud", "area": "Ingeniería de Datos", "modalidad": "Híbrido", "apoyo": "$20,000 MXN", "requisitos": "Snowflake, Databricks, Python, Airflow"},
+        {"id_empresa": 6, "razon_social": "Analytics Hub", "sector": "Manufactura", "parque_industrial": "Parque Industrial Bernardo Quintana", "latitud": 20.5750, "longitud": -100.3600, "id_vacante": 106, "titulo_puesto": "Especialista en Dashboarding", "area": "Analítica y BI", "modalidad": "Presencial", "apoyo": "$13,000 MXN", "requisitos": "Tableau, SQL, Modelado de datos"},
+        {"id_empresa": 7, "razon_social": "Deep Learning Corp", "sector": "Inteligencia Artificial", "parque_industrial": "El Marqués", "latitud": 20.6200, "longitud": -100.3900, "id_vacante": 107, "titulo_puesto": "Científico de Datos NLP", "area": "IA / ML", "modalidad": "Remoto", "apoyo": "$19,000 MXN", "requisitos": "Transformers, HuggingFace, Python, MLOps"}
+    ]
+    return pd.DataFrame(data)
 
-try:
-    df = cargar_datos()
-except Exception as e:
-    st.error(f"Error al conectar con la base de datos PostgreSQL: {e}")
-    st.stop()
+df = cargar_datos()
 
 st.title("Plataforma de Inteligencia Territorial y Vacantes UPQ")
 st.markdown("""
@@ -81,7 +66,6 @@ tab1, tab2, tab3 = st.tabs(["Mapa de Empleabilidad", "Indicadores de Mercado", "
 with tab1:
     st.subheader("Ubicación Geográfica de Entidades Empleadoras")
     
-    # Filtrar solo registros que tengan latitud y longitud válidas (sin NaN/null)
     df_mapa = df_filtrado.dropna(subset=['latitud', 'longitud'])
     
     if df_mapa.empty:
@@ -116,7 +100,7 @@ with tab1:
                 location=[row['latitud'], row['longitud']],
                 popup=folium.Popup(popup_html, max_width=300),
                 tooltip=f"{row['razon_social']} - {row['titulo_puesto']}",
-                icon=folium.Icon(color=color, icon="briefcase", prefix="fa")
+                icon=folium.Icon(color=color)
             ).add_to(mapa)
             
         st_folium(mapa, width="100%", height=500)
