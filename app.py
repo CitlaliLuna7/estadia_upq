@@ -1,151 +1,192 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import folium
+from streamlit_folium import st_folium
 import plotly.express as px
-from datetime import datetime, timedelta
-import io
-from fpdf import FPDF
+from sqlalchemy import create_engine
 
-# Configuracion basica de la pagina
 st.set_page_config(
-    page_title="ColdSense IoT - Monitoreo de Cadena de Frio",
+    page_title="Plataforma de Empleabilidad UPQ",
     layout="wide"
 )
 
-# Generamos datos ficticios de 24 horas para simular las lecturas de los sensores
 @st.cache_data
-def generar_datos_historicos():
-    np.random.seed(42)
-    fechas = [datetime.now() - timedelta(minutes=10 * i) for i in range(144)]
-    fechas.reverse()
+def cargar_datos():
+    engine = create_engine("postgresql://mi_usuario:Lunaz123@localhost:5432/estadia_upq")
+    query = """
+    SELECT 
+        e.id_empresa,
+        e.razon_social,
+        e.sector,
+        e.parque_industrial,
+        e.latitud,
+        e.longitud,
+        v.id_vacante,
+        v.titulo_puesto,
+        v.area,
+        v.modalidad,
+        v.apoyo,
+        v.requisitos
+    FROM vacantes v
+    JOIN empresas e ON v.id_empresa = e.id_empresa;
+    """
+    df = pd.read_sql(query, engine)
+    return df
 
-    # Temperatura normal alrededor de 4 C con un pico simulado para probar la alerta
-    temp_camara1 = np.random.normal(loc=4.0, scale=1.2, size=144)
-    temp_camara1[50:55] += 5.5
+try:
+    df = cargar_datos()
+except Exception as e:
+    st.error(f"Error al conectar con la base de datos PostgreSQL: {e}")
+    st.stop()
 
-    humedad_camara1 = np.random.normal(loc=60.0, scale=3.0, size=144)
-    puerta_estado = [1 if t > 7.0 else 0 for t in temp_camara1]
+st.title("Plataforma de Inteligencia Territorial y Vacantes UPQ")
+st.markdown("""
+Esta plataforma permite el mapeo interactivo y la inteligencia de mercado laboral para egresados de la 
+**Universidad Politécnica de Querétaro (UPQ)** en las áreas de **IA / ML, Ingeniería de Datos y Analítica & BI**.
+""")
+st.divider()
 
-    return pd.DataFrame({
-        "Timestamp": fechas,
-        "Nodo_ID": "Nodo-CamaraFria-01",
-        "Temperatura_C": np.round(temp_camara1, 2),
-        "Humedad_Pct": np.round(humedad_camara1, 2),
-        "Puerta_Abierta": puerta_estado
-    })
+st.sidebar.header("Filtros de Búsqueda")
 
-df_iot = generar_datos_historicos()
+parques_disponibles = ["Todos"] + sorted(list(df['parque_industrial'].dropna().unique()))
+parque_sel = st.sidebar.selectbox("Parque Industrial / Zona:", parques_disponibles)
 
-# Menu lateral con controles de rol y limites de temperatura
-st.sidebar.title("ColdSense IoT")
-st.sidebar.caption("Sistema de Monitoreo Ambiental y Alertas")
+areas_disponibles = ["Todas"] + sorted(list(df['area'].dropna().unique()))
+area_sel = st.sidebar.selectbox("Área de Especialidad:", areas_disponibles)
 
-rol = st.sidebar.selectbox(
-    "Seleccionar Rol de Usuario",
-    ["Administrador", "Supervisor / Calidad", "Tecnico de Mantenimiento"]
-)
+modalidades_disponibles = ["Todas"] + sorted(list(df['modalidad'].dropna().unique()))
+modalidad_sel = st.sidebar.selectbox("Modalidad de Trabajo:", modalidades_disponibles)
 
-st.sidebar.divider()
-st.sidebar.subheader("Configuracion de Umbrales")
-temp_min = st.sidebar.slider("Temperatura Minima Permitida (C)", -5.0, 5.0, 2.0)
-temp_max = st.sidebar.slider("Temperatura Maxima Permitida (C)", 0.0, 15.0, 8.0)
+df_filtrado = df.copy()
 
-# Encabezado principal
-st.title("Panel de Monitoreo en Tiempo Real")
-st.markdown(f"**Usuario en sesion:** `{rol}` | **Ubicacion:** Almacen Central de Medicamentos")
+if parque_sel != "Todos":
+    df_filtrado = df_filtrado[df_filtrado['parque_industrial'] == parque_sel]
 
-# Tomamos la ultima lectura recibida para mostrar el estado actual
-ultima_lectura = df_iot.iloc[-1]
-temp_actual = ultima_lectura["Temperatura_C"]
-hum_actual = ultima_lectura["Humedad_Pct"]
-puerta_actual = "ABIERTA" if ultima_lectura["Puerta_Abierta"] == 1 else "CERRADA"
+if area_sel != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['area'] == area_sel]
 
-# Validamos si la temperatura actual sobrepasa los umbrales elegidos
-if temp_actual > temp_max or temp_actual < temp_min:
-    estado_sistema = "CRITICO"
-else:
-    estado_sistema = "NORMAL"
+if modalidad_sel != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['modalidad'] == modalidad_sel]
 
-# Tarjetas numericas superiores (KPIs)
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Temperatura Actual", f"{temp_actual} C", delta=f"{round(temp_actual - 4.0, 2)} C vs Media")
-col2.metric("Humedad Relativa", f"{hum_actual} %")
-col3.metric("Estado de Puerta", puerta_actual)
-col4.metric("Estado del Sistema", estado_sistema)
+col1.metric("Vacantes Encontradas", len(df_filtrado))
+col2.metric("Empresas Mapeadas", df_filtrado['razon_social'].nunique())
+col3.metric("Área con Mayor Demanda", df_filtrado['area'].mode()[0] if not df_filtrado.empty else "N/A")
+col4.metric("Parques Cubiertos", df_filtrado['parque_industrial'].nunique())
 
 st.divider()
 
-# Grafica interactiva del historial con las lineas de limite
-st.subheader("Monitoreo Historico de Temperatura y Humedad")
+tab1, tab2, tab3 = st.tabs(["Mapa de Empleabilidad", "Indicadores de Mercado", "Lista de Vacantes"])
 
-fig = px.line(
-    df_iot, 
-    x="Timestamp", 
-    y="Temperatura_C", 
-    title="Comportamiento Termico en Camara de Refrigeracion (C)",
-    labels={"Temperatura_C": "Temperatura (C)", "Timestamp": "Fecha y Hora"}
-)
+with tab1:
+    st.subheader("Ubicación Geográfica de Entidades Empleadoras")
+    
+    # Filtrar solo registros que tengan latitud y longitud válidas (sin NaN/null)
+    df_mapa = df_filtrado.dropna(subset=['latitud', 'longitud'])
+    
+    if df_mapa.empty:
+        st.warning("No hay vacantes con coordenadas válidas para mostrar en el mapa con los filtros seleccionados.")
+    else:
+        lat_centro = df_mapa['latitud'].mean()
+        lon_centro = df_mapa['longitud'].mean()
+        
+        mapa = folium.Map(location=[lat_centro, lon_centro], zoom_start=11, tiles="OpenStreetMap")
+        
+        colores_area = {
+            'IA / ML': 'purple',
+            'Ingeniería de Datos': 'blue',
+            'Analítica y BI': 'green'
+        }
+        
+        for _, row in df_mapa.iterrows():
+            color = colores_area.get(row['area'], 'gray')
+            
+            popup_html = f"""
+            <div style='font-family: Arial, sans-serif; width: 220px;'>
+                <h4 style='margin-bottom:5px; color:#0056b3;'>{row['razon_social']}</h4>
+                <b>Puesto:</b> {row['titulo_puesto']}<br>
+                <b>Área:</b> {row['area']}<br>
+                <b>Modalidad:</b> {row['modalidad']}<br>
+                <b>Sueldo/Apoyo:</b> {row['apoyo']}<br>
+                <b>Zona:</b> {row['parque_industrial']}
+            </div>
+            """
+            
+            folium.Marker(
+                location=[row['latitud'], row['longitud']],
+                popup=folium.Popup(popup_html, max_width=300),
+                tooltip=f"{row['razon_social']} - {row['titulo_puesto']}",
+                icon=folium.Icon(color=color, icon="briefcase", prefix="fa")
+            ).add_to(mapa)
+            
+        st_folium(mapa, width="100%", height=500)
 
-fig.add_hline(y=temp_max, line_dash="dash", line_color="red", annotation_text="Limite Maximo")
-fig.add_hline(y=temp_min, line_dash="dash", line_color="blue", annotation_text="Limite Minimo")
+with tab2:
+    st.subheader("Análisis Estadístico de la Demanda Laboral")
+    
+    if not df_filtrado.empty:
+        g_col1, g_col2 = st.columns(2)
+        
+        with g_col1:
+            df_area_chart = df_filtrado.dropna(subset=['area'])
+            if not df_area_chart.empty:
+                fig_area = px.pie(
+                    df_area_chart, 
+                    names='area', 
+                    title='Distribución por Especialidad Técnica',
+                    hole=0.4,
+                    color_discrete_sequence=px.colors.qualitative.Set2
+                )
+                st.plotly_chart(fig_area, use_container_width=True)
+            
+        with g_col2:
+            df_parques = df_filtrado['parque_industrial'].dropna().value_counts().reset_index()
+            df_parques.columns = ['Parque Industrial', 'Vacantes']
+            
+            if not df_parques.empty:
+                fig_parque = px.bar(
+                    df_parques, 
+                    x='Vacantes', 
+                    y='Parque Industrial', 
+                    orientation='h',
+                    title='Concentración de Vacantes por Parque Industrial',
+                    color='Vacantes',
+                    color_continuous_scale='Blues'
+                )
+                st.plotly_chart(fig_parque, use_container_width=True)
+            
+        df_mod_chart = df_filtrado.dropna(subset=['modalidad'])
+        if not df_mod_chart.empty:
+            fig_mod = px.histogram(
+                df_mod_chart, 
+                x='modalidad', 
+                color='area', 
+                barmode='group',
+                title='Distribución de Modalidad según la Especialidad',
+                labels={'modalidad': 'Modalidad', 'count': 'Número de Vacantes'}
+            )
+            st.plotly_chart(fig_mod, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
-
-# Tabla que muestra solo los momentos en los que se rompieron los umbrales
-st.subheader("Registro de Eventos y Desviaciones")
-alertas_df = df_iot[(df_iot["Temperatura_C"] > temp_max) | (df_iot["Temperatura_C"] < temp_min)]
-
-if not alertas_df.empty:
-    st.error(f"Se han detectado {len(alertas_df)} registros fuera de los rangos seguros.")
-    st.table(alertas_df)
-else:
-    st.success("No se han registrado desviaciones de temperatura.")
-
-st.divider()
-
-# Propuesta conceptual del modulo de mantenimiento predictivo con IA
-st.subheader("Analisis Predictivo (Mantenimiento Basado en IA)")
-with st.expander("Ver Analisis Predictivo del Compresor"):
-    st.write("Deteccion de degradacion analizando el tiempo que le toma enfriar la camara tras abrir la puerta.")
-    desgaste_estimado = 18.5
-    st.progress(desgaste_estimado / 100)
-    st.caption(f"Desgaste estimado del compresor: **{desgaste_estimado}%** (Operacion Eficiente)")
-    st.info("Prediccion: Se estima requerir mantenimiento preventivo dentro de 45 dias.")
-
-st.divider()
-
-# Modulo para generar y descargar reportes en Excel y PDF
-st.subheader("Exportacion de Reportes para Auditoria")
-col_exp1, col_exp2 = st.columns(2)
-
-# Crear archivo Excel en memoria
-buffer_excel = io.BytesIO()
-with pd.ExcelWriter(buffer_excel, engine="openpyxl") as writer:
-    df_iot.to_excel(writer, index=False, sheet_name="Datos_ColdSense")
-
-col_exp1.download_button(
-    label="Descargar Reporte en Excel",
-    data=buffer_excel.getvalue(),
-    file_name="Reporte_ColdSense_IoT.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
-
-# Crear reporte PDF usando FPDF
-def generar_pdf(df):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(190, 10, "Reporte de Cumplimiento Cadena de Frio - ColdSense IoT", ln=True, align='C')
-    pdf.ln(10)
-    pdf.set_font("Arial", size=10)
-    pdf.cell(190, 8, f"Fecha de emision: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
-    pdf.cell(190, 8, f"Total de lecturas registradas: {len(df)}", ln=True)
-    pdf.cell(190, 8, f"Alertas registradas: {len(alertas_df)}", ln=True)
-    return pdf.output(dest='S').encode('latin-1')
-
-col_exp2.download_button(
-    label="Descargar Reporte en PDF",
-    data=generar_pdf(df_iot),
-    file_name="Reporte_ColdSense_IoT.pdf",
-    mime="application/pdf"
-)
+with tab3:
+    st.subheader("Explorador Detallado de Requisitos y Contrata")
+    
+    busqueda = st.text_input("Buscar palabra clave (ej. Python, SQL, AWS, Docker):", "")
+    
+    df_tabla = df_filtrado.copy()
+    if busqueda:
+        df_tabla = df_tabla[
+            df_tabla['titulo_puesto'].astype(str).str.contains(busqueda, case=False, na=False) |
+            df_tabla['requisitos'].astype(str).str.contains(busqueda, case=False, na=False) |
+            df_tabla['razon_social'].astype(str).str.contains(busqueda, case=False, na=False)
+        ]
+        
+    columnas_mostrar = ['razon_social', 'titulo_puesto', 'area', 'modalidad', 'apoyo', 'parque_industrial', 'requisitos']
+    st.dataframe(df_tabla[columnas_mostrar], use_container_width=True, hide_index=True)
+    
+    csv_bytes = df_tabla[columnas_mostrar].to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Exportar Consulta a CSV",
+        data=csv_bytes,
+        file_name="reporte_vacantes_upq.csv",
+        mime="text/csv"
+    )
