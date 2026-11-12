@@ -9,6 +9,64 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #FFFFFF;
+        color: #1E293B;
+    }
+    section[data-testid="stSidebar"] {
+        background-color: #F4F6F9;
+        border-right: 2px solid #002B5B;
+    }
+    h1 {
+        color: #002B5B !important;
+        border-bottom: 3px solid #C8102E;
+        padding-bottom: 8px;
+    }
+    h2, h3 {
+        color: #002B5B !important;
+    }
+    div[data-testid="stMetric"] {
+        background-color: #F8FAFC;
+        border-left: 5px solid #002B5B;
+        border-top: 1px solid #E2E8F0;
+        border-right: 1px solid #E2E8F0;
+        border-bottom: 1px solid #E2E8F0;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #475569 !important;
+        font-weight: 600;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #C8102E !important;
+        font-weight: 700;
+    }
+    button[data-baseweb="tab"] {
+        color: #002B5B !important;
+        font-weight: 600;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #C8102E !important;
+        border-bottom-color: #C8102E !important;
+    }
+    div.stDownloadButton > button {
+        background-color: #002B5B;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #C8102E;
+        color: #FFFFFF;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def cargar_datos():
     data = [
@@ -53,7 +111,16 @@ def cargar_datos():
         {"id_empresa": 15, "razon_social": "CyberAI Mexico", "sector": "Ciberseguridad", "parque_industrial": "Parque Tecnologico / Remoto", "latitud": 20.5650, "longitud": -100.3250, "id_vacante": 39, "titulo_puesto": "Investigador de Modelos de Amenazas IA", "area": "IA / ML", "modalidad": "Remoto", "apoyo": "$35,000 por mes", "requisitos": "Python, Threat Modeling, ML"},
         {"id_empresa": 22, "razon_social": "SoftQro Labs", "sector": "Software", "parque_industrial": "Zona Juriquilla", "latitud": 20.6550, "longitud": -100.4550, "id_vacante": 40, "titulo_puesto": "Data Engineer Junior", "area": "Ingeniería de Datos", "modalidad": "Híbrido", "apoyo": "$16,000 por mes", "requisitos": "SQL, Python, Bash"},
         {"id_empresa": 25, "razon_social": "Fintech Querétaro", "sector": "Fintech", "parque_industrial": "Zona Carretas / Centro", "latitud": 20.5930, "longitud": -100.3840, "id_vacante": 41, "titulo_puesto": "Analista BI de Prevención de Fraudes", "area": "Analítica y BI", "modalidad": "Híbrido", "apoyo": "$22,500 por mes", "requisitos": "SQL, Power BI, Python"},
-        {"id_empresa": 31, "razon_social": "Robotics QRO", "sector": "Robótica", "parque_industrial": "Parque Industrial Bernardo Quintana", "latitud": 20.5960, "longitud": -100.3930, "id_vacante": 42, "titulo_puesto": "Científico de Datos en Percepción Remota", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$31,000 por mes", "requisitos": "C++, Python, OpenCV"}
+        {"id_empresa": 31, "razon_social": "Robotics QRO", "sector": "Robótica", "parque_industrial": "Parque Industrial Bernardo Quintana", "latitud": 20.5960, "longitud": -100.3930, "id_vacante": 42, "titulo_puesto": "Científico de Datos en Percepción Remota", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$31,000 por mes", "requisitos": "C++, Python, OpenCV"},
+        {"id_empresa": 33, "razon_social": "MAXLI CAROS", "sector": "Salud / Tecnología", "parque_industrial": "Parque Industrial El Marqués", "latitud": 20.5895, "longitud": -100.3880, "id_vacante": 43, "titulo_puesto": "Becario de Desarrollo de Software", "area": "Ingeniería de Datos", "modalidad": "Presencial", "apoyo": "$4,000.00 (Mensual)", "requisitos": "Estudiante Ing. Desarrollo de Software, Apps móviles, Intranet"},
+        {"id_empresa": 34, "razon_social": "Importante empresa del sector", "sector": "Industrial / Servicios", "parque_industrial": "Zona Centro / Milenio", "latitud": 20.5860, "longitud": -100.3740, "id_vacante": 44, "titulo_puesto": "Ingeniero(a) Industrial de Procesos y Gestión de Información con IA", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$13,000.00 (Mensual)", "requisitos": "Análisis de datos, Herramientas digitales e IA, Documentación"},
+        {"id_empresa": 35, "razon_social": "ANCABE", "sector": "Consultoría / Comercial", "parque_industrial": "Zona Carretas / Centro", "latitud": 20.5915, "longitud": -100.3810, "id_vacante": 45, "titulo_puesto": "Practicante de Software, Informática, Sistemas Computacionales", "area": "Analítica y BI", "modalidad": "Presencial", "apoyo": "$7,000.00 (Mensual)", "requisitos": "Power BI, Bots de IA, CRM, Apollo, Depuración de bases de datos"},
+        {"id_empresa": 36, "razon_social": "Colegio Anglo Mexicano de Querétaro SC", "sector": "Educación", "parque_industrial": "Zona Centro / Milenio", "latitud": 20.5840, "longitud": -100.3710, "id_vacante": 46, "titulo_puesto": "Docente de Programación, Robótica e IA", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "No especificado", "requisitos": "Ing. Sistemas Computacionales, Programación, Robótica, Inteligencia Artificial"},
+        {"id_empresa": 37, "razon_social": "FEMSSA", "sector": "Agroindustria", "parque_industrial": "Parque Industrial El Marqués", "latitud": 20.5870, "longitud": -100.3760, "id_vacante": 47, "titulo_puesto": "Especialista en Brand Content con IA", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$18,000.00 (Mensual)", "requisitos": "Producción digital, Herramientas de Inteligencia Artificial"},
+        {"id_empresa": 38, "razon_social": "Cyfraz", "sector": "Medios / Tecnología", "parque_industrial": "Parque Tecnologico / Remoto", "latitud": 20.5620, "longitud": -100.3220, "id_vacante": 48, "titulo_puesto": "Editor de videos con IA", "area": "IA / ML", "modalidad": "Híbrido", "apoyo": "$12,000.00 (Mensual)", "requisitos": "Herramientas de Inteligencia Artificial, After Effects, Premiere"},
+        {"id_empresa": 39, "razon_social": "BAP MAQUINARIA", "sector": "Maquinaria / Industrial", "parque_industrial": "Corregidora", "latitud": 20.5450, "longitud": -100.4400, "id_vacante": 49, "titulo_puesto": "Ejecutiva de Marketing Digital y Prospección Comercial con IA", "area": "IA / ML", "modalidad": "Presencial", "apoyo": "$10,000.00 (Mensual) + Comisiones", "requisitos": "Inteligencia Artificial aplicada a ventas, Análisis de clientes, Prospección"},
+        {"id_empresa": 40, "razon_social": "icorp", "sector": "Tecnología / TI", "parque_industrial": "Zona Juriquilla", "latitud": 20.6520, "longitud": -100.4520, "id_vacante": 50, "titulo_puesto": "IT Software Asset Management (SAM)", "area": "Ingeniería de Datos", "modalidad": "Presencial", "apoyo": "No especificado", "requisitos": "Ing. Ciencias de la Computación / TI, Auditorías y gestión de software, Inglés"},
+        {"id_empresa": 41, "razon_social": "LINKEA-RH", "sector": "Ecommerce / Retail", "parque_industrial": "Parque Industrial El Marqués", "latitud": 20.5900, "longitud": -100.3780, "id_vacante": 51, "titulo_puesto": "Analista de Datos (Data Analyst)", "area": "Analítica y BI", "modalidad": "Presencial", "apoyo": "No especificado", "requisitos": "Python, Machine Learning, SQL, Excel avanzado, Power BI, Tableau, Salesforce"}
     ]
     return pd.DataFrame(data)
 
@@ -112,10 +179,10 @@ with tab1:
         mapa = folium.Map(location=[lat_centro, lon_centro], zoom_start=11, tiles="OpenStreetMap")
         
         colores_area = {
-            'IA / ML': 'purple',
-            'Ingeniería de Datos': 'blue',
-            'Analítica y BI': 'green',
-            'Business Intelligence': 'green'
+            'IA / ML': 'red',
+            'Ingeniería de Datos': 'darkblue',
+            'Analítica y BI': 'blue',
+            'Business Intelligence': 'cadetblue'
         }
         
         for _, row in df_mapa.iterrows():
@@ -123,7 +190,7 @@ with tab1:
             
             popup_html = f"""
             <div style='font-family: Arial, sans-serif; width: 220px;'>
-                <h4 style='margin-bottom:5px; color:#0056b3;'>{row['razon_social']}</h4>
+                <h4 style='margin-bottom:5px; color:#002B5B;'>{row['razon_social']}</h4>
                 <b>Puesto:</b> {row['titulo_puesto']}<br>
                 <b>Área:</b> {row['area']}<br>
                 <b>Modalidad:</b> {row['modalidad']}<br>
@@ -144,6 +211,8 @@ with tab1:
 with tab2:
     st.subheader("Análisis Estadístico de la Demanda Laboral")
     
+    paleta_institucional = ['#002B5B', '#C8102E', '#1D5B79', '#64748B']
+    
     if not df_filtrado.empty:
         g_col1, g_col2 = st.columns(2)
         
@@ -155,8 +224,9 @@ with tab2:
                     names='area', 
                     title='Distribución por Especialidad Técnica',
                     hole=0.4,
-                    color_discrete_sequence=px.colors.qualitative.Set2
+                    color_discrete_sequence=paleta_institucional
                 )
+                fig_area.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_area, use_container_width=True)
             
         with g_col2:
@@ -171,8 +241,9 @@ with tab2:
                     orientation='h',
                     title='Concentración de Vacantes por Parque Industrial',
                     color='Vacantes',
-                    color_continuous_scale='Blues'
+                    color_continuous_scale=['#93C5FD', '#002B5B']
                 )
+                fig_parque.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_parque, use_container_width=True)
             
         df_mod_chart = df_filtrado.dropna(subset=['modalidad'])
@@ -183,8 +254,10 @@ with tab2:
                 color='area', 
                 barmode='group',
                 title='Distribución de Modalidad según la Especialidad',
-                labels={'modalidad': 'Modalidad', 'count': 'Número de Vacantes'}
+                labels={'modalidad': 'Modalidad', 'count': 'Número de Vacantes'},
+                color_discrete_sequence=paleta_institucional
             )
+            fig_mod.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_mod, use_container_width=True)
 
 with tab3:
