@@ -5,7 +5,7 @@ from streamlit_folium import st_folium
 import plotly.express as px
 
 st.set_page_config(
-    page_title="Plataforma de Empleabilidad UPQ",
+    page_title="Plataforma Web de Analítica y Evaluación UPQ",
     layout="wide"
 )
 
@@ -53,14 +53,14 @@ st.markdown("""
         color: #C8102E !important;
         border-bottom-color: #C8102E !important;
     }
-    div.stDownloadButton > button {
+    div.stDownloadButton > button, div.stFormSubmitButton > button {
         background-color: #002B5B;
         color: #FFFFFF;
         border: none;
         border-radius: 5px;
         font-weight: 600;
     }
-    div.stDownloadButton > button:hover {
+    div.stDownloadButton > button:hover, div.stFormSubmitButton > button:hover {
         background-color: #C8102E;
         color: #FFFFFF;
     }
@@ -173,12 +173,31 @@ def cargar_datos():
     ]
     return pd.DataFrame(data)
 
-df = cargar_datos()
+def inicializar_evaluaciones():
+    if "df_evaluaciones" not in st.session_state:
+        evals_iniciales = [
+            {"id_evaluacion": 101, "id_empresa": 42, "razon_social": "Zebra Technologies Corporation", "tipo_proceso": "Estadía Profesional", "area_proyecto": "IA / ML", "satisfaccion_alumno": 4.9, "calidad_empresa": 4.8, "desempeno_estudiantil": 9.6, "recomendada": "Sí"},
+            {"id_evaluacion": 102, "id_empresa": 43, "razon_social": "Continental AG", "tipo_proceso": "Estadía Profesional", "area_proyecto": "Analítica y BI", "satisfaccion_alumno": 4.7, "calidad_empresa": 4.9, "desempeno_estudiantil": 9.4, "recomendada": "Sí"},
+            {"id_evaluacion": 103, "id_empresa": 45, "razon_social": "Schneider Electric Corp", "tipo_proceso": "Estancia II", "area_proyecto": "IA / ML", "satisfaccion_alumno": 4.8, "calidad_empresa": 4.7, "desempeno_estudiantil": 9.5, "recomendada": "Sí"},
+            {"id_evaluacion": 104, "id_empresa": 46, "razon_social": "Autoliv Mexico", "tipo_proceso": "Estadía Profesional", "area_proyecto": "Analítica y BI", "satisfaccion_alumno": 4.6, "calidad_empresa": 4.8, "desempeno_estudiantil": 9.2, "recomendada": "Sí"},
+            {"id_evaluacion": 105, "id_empresa": 50, "razon_social": "KOSTAL Mexicana", "tipo_proceso": "Estancia I", "area_proyecto": "Ingeniería de Datos", "satisfaccion_alumno": 4.5, "calidad_empresa": 4.6, "desempeno_estudiantil": 9.0, "recomendada": "Sí"},
+            {"id_evaluacion": 106, "id_empresa": 48, "razon_social": "ALTEN MÉXICO", "tipo_proceso": "Estadía Profesional", "area_proyecto": "IA / ML", "satisfaccion_alumno": 4.8, "calidad_empresa": 4.7, "desempeno_estudiantil": 9.7, "recomendada": "Sí"},
+            {"id_evaluacion": 107, "id_empresa": 53, "razon_social": "Siemens Energy", "tipo_proceso": "Estancia II", "area_proyecto": "Analítica y BI", "satisfaccion_alumno": 4.9, "calidad_empresa": 4.9, "desempeno_estudiantil": 9.8, "recomendada": "Sí"},
+            {"id_evaluacion": 108, "id_empresa": 54, "razon_social": "BRP Querétaro", "tipo_proceso": "Estadía Profesional", "area_proyecto": "Ingeniería de Datos", "satisfaccion_alumno": 4.4, "calidad_empresa": 4.5, "desempeno_estudiantil": 8.9, "recomendada": "Sí"},
+            {"id_evaluacion": 109, "id_empresa": 66, "razon_social": "Controladora Mabe", "tipo_proceso": "Estancia II", "area_proyecto": "Ingeniería de Datos", "satisfaccion_alumno": 4.6, "calidad_empresa": 4.7, "desempeno_estudiantil": 9.1, "recomendada": "Sí"},
+            {"id_evaluacion": 110, "id_empresa": 49, "razon_social": "Dana Incorporated", "tipo_proceso": "Estadía Profesional", "area_proyecto": "Ingeniería de Datos", "satisfaccion_alumno": 4.7, "calidad_empresa": 4.6, "desempeno_estudiantil": 9.3, "recomendada": "Sí"},
+            {"id_evaluacion": 111, "id_empresa": 5, "razon_social": "HOSPITAL MOSCATI", "tipo_proceso": "Estancia I", "area_proyecto": "IA / ML", "satisfaccion_alumno": 4.3, "calidad_empresa": 4.4, "desempeno_estudiantil": 8.8, "recomendada": "Sí"},
+            {"id_evaluacion": 112, "id_empresa": 4, "razon_social": "ELITEBRAIN", "tipo_proceso": "Estadía Profesional", "area_proyecto": "IA / ML", "satisfaccion_alumno": 4.9, "calidad_empresa": 4.8, "desempeno_estudiantil": 9.6, "recomendada": "Sí"}
+        ]
+        st.session_state.df_evaluaciones = pd.DataFrame(evals_iniciales)
 
-st.title("Plataforma de Inteligencia Territorial y Vacantes UPQ")
+df = cargar_datos()
+inicializar_evaluaciones()
+
+st.title("Plataforma Web de Analítica y Evaluación de Estancias y Estadías Profesionales")
 st.markdown("""
-Esta plataforma permite el mapeo interactivo y la inteligencia de mercado laboral para egresados de la 
-**Universidad Politécnica de Querétaro (UPQ)** en las áreas de **IA / ML, Ingeniería de Datos y Analítica & BI**.
+Sistema institucional de inteligencia territorial y evaluación académica para la **Universidad Politécnica de Querétaro (UPQ)**. 
+Integra un modelo relacional normalizado (**3FN**) para el monitoreo de **vacantes industriales** y la **evaluación de calidad y desempeño en empresas receptoras**.
 """)
 st.divider()
 
@@ -212,7 +231,12 @@ col4.metric("Parques Cubiertos", df_filtrado['parque_industrial'].nunique())
 
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["Mapa de Empleabilidad", "Indicadores de Mercado", "Lista de Vacantes"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Mapa de Empleabilidad",
+    "Indicadores de Mercado",
+    "Lista de Vacantes",
+    "Evaluación de Estancias y Empresas"
+])
 
 with tab1:
     st.subheader("Ubicación Geográfica de Entidades Empleadoras")
@@ -330,5 +354,95 @@ with tab3:
         label="Exportar Consulta a CSV",
         data=csv_bytes,
         file_name="reporte_vacantes_upq.csv",
+        mime="text/csv"
+    )
+
+with tab4:
+    st.subheader("Evaluación de Desempeño Estudiantil y Calidad de Empresas Receptoras (Modelo 3FN)")
+    st.markdown("""
+    Módulo analítico para el seguimiento de **Estancia I, Estancia II y Estadía Profesional**, normalizado mediante llaves relacionales (`id_empresa`, `id_evaluacion`) para medir la satisfacción del alumno, el desempeño técnico y la calidad de las entidades receptoras.
+    """)
+
+    df_eval = st.session_state.df_evaluaciones
+
+    e_col1, e_col2, e_col3, e_col4 = st.columns(4)
+    e_col1.metric("Evaluaciones Registradas", len(df_eval))
+    e_col2.metric("Satisfacción Estudiantil", f"{df_eval['satisfaccion_alumno'].mean():.2f} / 5.0")
+    e_col3.metric("Calidad Empresas Receptoras", f"{df_eval['calidad_empresa'].mean():.2f} / 5.0")
+    e_col4.metric("Desempeño Técnico UPQ", f"{df_eval['desempeno_estudiantil'].mean():.2f} / 10")
+
+    st.divider()
+
+    ev_g1, ev_g2 = st.columns(2)
+    paleta_eval = ['#002B5B', '#C8102E', '#1D5B79', '#64748B']
+
+    with ev_g1:
+        fig_calidad = px.bar(
+            df_eval.sort_values("calidad_empresa", ascending=True),
+            x="calidad_empresa",
+            y="razon_social",
+            orientation="h",
+            title="Índice de Calidad por Empresa Receptora (Escala 1 a 5)",
+            labels={"calidad_empresa": "Calificación de Calidad", "razon_social": "Empresa Receptora"},
+            color="calidad_empresa",
+            color_continuous_scale=["#93C5FD", "#002B5B"]
+        )
+        fig_calidad.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig_calidad, use_container_width=True)
+
+    with ev_g2:
+        fig_proceso = px.box(
+            df_eval,
+            x="tipo_proceso",
+            y="desempeno_estudiantil",
+            color="tipo_proceso",
+            title="Desempeño Estudiantil por Etapa Académica",
+            labels={"tipo_proceso": "Proceso Académico", "desempeno_estudiantil": "Calificación (0-10)"},
+            color_discrete_sequence=paleta_eval
+        )
+        fig_proceso.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+        st.plotly_chart(fig_proceso, use_container_width=True)
+
+    st.subheader("Registro de Nueva Evaluación (Portal de Captura)")
+    empresas_catalogo = df[['id_empresa', 'razon_social']].drop_duplicates().sort_values('razon_social')
+    mapa_empresas = dict(zip(empresas_catalogo['razon_social'], empresas_catalogo['id_empresa']))
+
+    with st.form("form_nueva_evaluacion"):
+        f_c1, f_c2, f_c3 = st.columns(3)
+        empresa_sel = f_c1.selectbox("Empresa Receptora (Catálogo 3FN):", list(mapa_empresas.keys()))
+        proceso_sel = f_c2.selectbox("Proceso Académico:", ["Estancia I", "Estancia II", "Estadía Profesional"])
+        area_eval_sel = f_c3.selectbox("Área del Proyecto:", ["IA / ML", "Ingeniería de Datos", "Analítica y BI"])
+
+        f_c4, f_c5, f_c6 = st.columns(3)
+        sat_val = f_c4.slider("Satisfacción del Estudiante (1-5):", 1.0, 5.0, 4.8, 0.1)
+        cal_val = f_c5.slider("Calidad de la Empresa Receptora (1-5):", 1.0, 5.0, 4.7, 0.1)
+        des_val = f_c6.slider("Desempeño del Estudiante (0-10):", 6.0, 10.0, 9.5, 0.1)
+
+        enviado = st.form_submit_button("Registrar Evaluación en Plataforma")
+        if enviado:
+            nuevo_id = int(df_eval['id_evaluacion'].max()) + 1
+            nueva_fila = pd.DataFrame([{
+                "id_evaluacion": nuevo_id,
+                "id_empresa": mapa_empresas[empresa_sel],
+                "razon_social": empresa_sel,
+                "tipo_proceso": proceso_sel,
+                "area_proyecto": area_eval_sel,
+                "satisfaccion_alumno": sat_val,
+                "calidad_empresa": cal_val,
+                "desempeno_estudiantil": des_val,
+                "recomendada": "Sí" if cal_val >= 4.0 else "En revisión"
+            }])
+            st.session_state.df_evaluaciones = pd.concat([df_eval, nueva_fila], ignore_index=True)
+            st.success(f"Evaluación #{nuevo_id} registrada correctamente para {empresa_sel}.")
+            st.rerun()
+
+    st.subheader("Tabla Relacional de Evaluaciones Registradas")
+    st.dataframe(st.session_state.df_evaluaciones, use_container_width=True, hide_index=True)
+
+    csv_eval = st.session_state.df_evaluaciones.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Exportar Evaluaciones a CSV",
+        data=csv_eval,
+        file_name="evaluaciones_estancias_estadias_upq.csv",
         mime="text/csv"
     )
