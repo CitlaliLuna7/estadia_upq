@@ -64,6 +64,17 @@ st.markdown("""
         background-color: #C8102E;
         color: #FFFFFF;
     }
+    .ficha-empresa {
+        background-color: #F8FAFC;
+        border-left: 6px solid #C8102E;
+        border-top: 1px solid #CBD5E1;
+        border-right: 1px solid #CBD5E1;
+        border-bottom: 1px solid #CBD5E1;
+        padding: 18px 22px;
+        border-radius: 8px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -240,6 +251,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 
 with tab1:
     st.subheader("Ubicación Geográfica de Entidades Empleadoras")
+    st.caption("Haz clic sobre cualquier marcador en el mapa para consultar abajo los puestos disponibles y los requisitos técnicos que solicita la empresa.")
     
     df_mapa = df_filtrado.dropna(subset=['latitud', 'longitud'])
     
@@ -279,7 +291,41 @@ with tab1:
                 icon=folium.Icon(color=color)
             ).add_to(mapa)
             
-        st_folium(mapa, width="100%", height=500)
+        mapa_data = st_folium(mapa, width="100%", height=480)
+
+        # Panel dinámico inferior al seleccionar un marcador
+        st.markdown("### Detalle y Requerimientos de la Empresa Seleccionada")
+        clic_obj = mapa_data.get("last_object_clicked") if mapa_data else None
+
+        if clic_obj and "lat" in clic_obj and "lng" in clic_obj:
+            lat_sel = clic_obj["lat"]
+            lng_sel = clic_obj["lng"]
+
+            # Buscar vacantes en esa coordenada (tolerancia mínima por redondeo)
+            coincidencias = df_mapa[
+                (df_mapa["latitud"].sub(lat_sel).abs() < 0.0005) &
+                (df_mapa["longitud"].sub(lng_sel).abs() < 0.0005)
+            ]
+
+            if not coincidencias.empty:
+                empresa_nombre = coincidencias.iloc[0]["razon_social"]
+                sector_emp = coincidencias.iloc[0]["sector"]
+                parque_emp = coincidencias.iloc[0]["parque_industrial"]
+
+                st.success(f"Entidad seleccionada: **{empresa_nombre}** | Sector: **{sector_emp}** | Ubicación: **{parque_emp}**")
+
+                for _, vac in coincidencias.iterrows():
+                    st.markdown(f"""
+                    <div class="ficha-empresa">
+                        <h4 style="margin:0 0 8px 0; color:#002B5B;">{vac['titulo_puesto']}</h4>
+                        <p style="margin:4px 0;"><b>Área de Especialidad:</b> {vac['area']} &nbsp;|&nbsp; <b>Modalidad:</b> {vac['modalidad']} &nbsp;|&nbsp; <b>Apoyo / Sueldo:</b> {vac['apoyo']}</p>
+                        <p style="margin:8px 0 0 0; color:#C8102E;"><b>Requerimientos / Perfil Solicitado:</b> <span style="color:#1E293B;">{vac['requisitos']}</span></p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("Selecciona exactamente uno de los pines de colores en el mapa para desplegar sus requisitos aquí abajo.")
+        else:
+            st.info("Aún no has seleccionado ninguna empresa. Haz clic sobre un pin en el mapa superior para ver aquí sus vacantes y requerimientos.")
 
 with tab2:
     st.subheader("Análisis Estadístico de la Demanda Laboral")
